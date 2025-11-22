@@ -1,3 +1,236 @@
-module Cookie(input a, output b)
+module  clicker_logic(
 
-end module
+	//////////// ADC //////////
+	//output		          		ADC_CONVST,
+	//output		          		ADC_DIN,
+	//input 		          		ADC_DOUT,
+	//output		          		ADC_SCLK,
+
+	//////////// Audio //////////
+	//input 		          		AUD_ADCDAT,
+	//inout 		          		AUD_ADCLRCK,
+	//inout 		          		AUD_BCLK,
+	//output		          		AUD_DACDAT,
+	//inout 		          		AUD_DACLRCK,
+	//output		          		AUD_XCK,
+
+	//////////// CLOCK //////////
+	//input 		          		CLOCK2_50,
+	//input 		          		CLOCK3_50,
+	//input 		          		CLOCK4_50,
+	input 		          		CLOCK_50,
+
+	//////////// SDRAM //////////
+	//output		    [12:0]		DRAM_ADDR,
+	//output		     [1:0]		DRAM_BA,
+	//output		          		DRAM_CAS_N,
+	//output		          		DRAM_CKE,
+	//output		          		DRAM_CLK,
+	//output		          		DRAM_CS_N,
+	//inout 		    [15:0]		DRAM_DQ,
+	//output		          		DRAM_LDQM,
+	//output		          		DRAM_RAS_N,
+	//output		          		DRAM_UDQM,
+	//output		          		DRAM_WE_N,
+
+	//////////// I2C for Audio and Video-In //////////
+	//output		          		FPGA_I2C_SCLK,
+	//inout 		          		FPGA_I2C_SDAT,
+
+	//////////// SEG7 //////////
+	output		     [6:0]		HEX0,
+	output		     [6:0]		HEX1,
+	output		     [6:0]		HEX2,
+	output		     [6:0]		HEX3,
+	//output		     [6:0]		HEX4,
+	//output		     [6:0]		HEX5,
+
+	//////////// IR //////////
+	//input 		          		IRDA_RXD,
+	//output		          		IRDA_TXD,
+
+	//////////// KEY //////////
+	input 		     [3:0]		KEY,
+
+	//////////// LED //////////
+	output		     [9:0]		LEDR
+
+	//////////// PS2 //////////
+	//inout 		          		PS2_CLK,
+	//inout 		          		PS2_CLK2,
+	//inout 		          		PS2_DAT,
+	//inout 		          		PS2_DAT2,
+
+	//////////// SW //////////
+	//input 		     [9:0]		SW
+
+	//////////// Video-In //////////
+	//input 		          		TD_CLK27,
+	//input 		     [7:0]		TD_DATA,
+	//input 		          		TD_HS,
+	//output		          		TD_RESET_N,
+	//input 		          		TD_VS,
+
+	//////////// VGA //////////
+	//output		          		VGA_BLANK_N,
+	//output		     [7:0]		VGA_B,
+	//output		          		VGA_CLK,
+	//output		     [7:0]		VGA_G,
+	//output		          		VGA_HS,
+	//output		     [7:0]		VGA_R,
+	//output		          		VGA_SYNC_N,
+	//output		          		VGA_VS,
+
+	//////////// GPIO_0, GPIO_0 connect to GPIO Default //////////
+	//inout 		    [35:0]		GPIO_0,
+
+	//////////// GPIO_1, GPIO_1 connect to GPIO Default //////////
+	//inout 		    [35:0]		GPIO_1
+);
+
+//	Turn on all display
+	//assign	HEX0		=	7'h00;
+	//assign	HEX1		=	7'h00;
+	//assign	HEX2		=	7'h00;
+	//assign	HEX3		=	7'h00;
+	//assign	HEX4		=	7'h00;
+	//assign	HEX5		=	7'h00;
+	//assign	GPIO_0		=	36'hzzzzzzzzz;
+	//assign	GPIO_1		=	36'hzzzzzzzzz;
+	//assign LEDR[9:0] = 10'd0;
+
+
+wire [6:0]seg7_neg_sign;
+wire [6:0]seg7_dig0;
+wire [6:0]seg7_dig1;
+wire [6:0]seg7_dig2;
+
+assign HEX0 = seg7_dig0;
+assign HEX1 = seg7_dig1;
+assign HEX2 = seg7_dig2;
+assign HEX3 = seg7_neg_sign;
+
+
+wire clk;
+assign clk = CLOCK_50;
+wire rst;
+assign rst = KEY[3];
+wire click;
+wire purchase;
+assign purchase = ~KEY[1];
+assign click = ~KEY[2];
+wire [1:0]display_control;
+assign display_control = KEY[1:0];
+reg [7:0]to_display;
+wire tucker;
+wire buy;
+wire sec;
+
+
+assign LEDR[3:0] = {rst, buy, tucker, win};
+assign LEDR[5:4] = display_control;
+assign LEDR[9:6] = S;
+
+
+reg [19:0]count;
+reg win;
+reg [4:0] S;
+reg [4:0] NS;
+parameter START = 4'd0,	
+			 ONE_CLICK = 4'd1,
+			 TWO_CLICK = 4'd2,
+			 AUTO_INC = 4'd3,
+			 WIN = 4'd4,
+			 ERROR = 4'hF;
+			 
+always @(posedge clk or negedge rst)
+begin
+	if (rst == 1'b0)
+		S <= START;
+	else
+		S <= NS;
+end
+
+always @ (posedge clk or negedge rst)
+case (S)
+	START: if (tucker == 1'b1)
+				NS <= ONE_CLICK;
+			 else
+				NS <= START;
+	ONE_CLICK: if (count < 20'd75)
+						if (buy == 1'b1 && count >= 20'd10)
+						   NS <= TWO_CLICK;
+						else
+							NS <= ONE_CLICK;
+				  else 
+					 NS <= WIN;
+	TWO_CLICK: if (count < 20'd75)
+						if (buy == 1'b1 && count >= 20'd50)
+						   NS <= AUTO_INC;
+						else
+							NS <= TWO_CLICK;
+				  else
+					 NS <= WIN;
+	AUTO_INC: if (count < 20'd75)
+					NS <= AUTO_INC;
+				 else
+					NS <= WIN;
+	WIN: NS <= WIN;
+	default: NS <= ERROR;
+endcase
+
+always @(posedge clk or negedge rst)
+begin
+	if (rst == 1'b0)
+		begin
+			win <= 1'b0;
+			count <= 20'd0;
+		end
+	else
+		begin
+			case(S)
+				START: win <= 1'b0;
+				ONE_CLICK: if (tucker == 1'b1)
+								 count <= count + 1'b1;
+							  else if (buy == 1'b1 && count >= 20'd10)
+								 count <= count - 4'd10;
+							  else
+								 count <= count;
+				TWO_CLICK: if (tucker == 1'b1)
+								count <= count + 2'd2;
+							  else if (buy == 1'b1 && count >= 20'd50)
+								 count <= count - 6'd50;
+							  else
+								  count <= count;
+				AUTO_INC: if (tucker == 1'b1)
+								count <= count + 2'd2 + sec;
+							 else
+								count <= count + sec;
+				WIN: win <= 1'b1;
+			 endcase
+		end
+end
+									
+click_confirmer my_click(.clk(clk), .rst(rst), .pushed(click), .confirmation(tucker));	
+click_confirmer my_buy(.clk(clk), .rst(rst), .pushed(purchase), .confirmation(buy));
+tucker_ticker second(.clk(clk), .rst(rst), .sec(sec));	
+
+		
+		
+three_decimal_vals_w_neg display(
+.val(to_display),
+.seg7_neg_sign(seg7_neg_sign),
+.seg7_dig0(seg7_dig0),
+.seg7_dig1(seg7_dig1),
+.seg7_dig2(seg7_dig2)
+);
+
+always @(*)
+begin
+	if (display_control == 2'd0)
+		to_display = count[19:12];
+	else 
+		to_display = count[7:0];
+end
+
+endmodule

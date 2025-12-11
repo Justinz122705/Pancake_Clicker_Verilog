@@ -1,0 +1,4 @@
+Warning (10268): Verilog HDL information at vga_driver_memory.v(195): always construct contains both blocking and non-blocking assignments File: M:/ECE_287/Tucker_Clicker/VGA_ON_DE1_SOC_2024/vga_driver_memory/vga_driver_memory.v Line: 195
+Info (10281): Verilog HDL Declaration information at vga_driver_memory.v(320): object "win" differs only in case from object "WIN" in the same scope File: M:/ECE_287/Tucker_Clicker/VGA_ON_DE1_SOC_2024/vga_driver_memory/vga_driver_memory.v Line: 320
+Warning (10268): Verilog HDL information at vga_driver.v(51): always construct contains both blocking and non-blocking assignments File: M:/ECE_287/Tucker_Clicker/VGA_ON_DE1_SOC_2024/vga_driver_memory/vga_driver.v Line: 51
+Warning (10268): Verilog HDL information at keyboard.v(87): always construct contains both blocking and non-blocking assignments File: M:/ECE_287/Tucker_Clicker/VGA_ON_DE1_SOC_2024/vga_driver_memory/keyboard.v Line: 87
